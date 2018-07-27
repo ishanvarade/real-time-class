@@ -21,7 +21,7 @@ RT_task::RT_task(const sched_attr & _attr, const int _core_id,
 
 RT_task::~RT_task()
 {
-	// TODO Auto-generated destructor stub
+	// TODO Auto-generated destructor stubfd
 }
 
 void RT_task::set_cpu_affinity()
