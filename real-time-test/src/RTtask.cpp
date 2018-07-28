@@ -55,7 +55,7 @@ RT_task::RT_task(__u64 sched_runtime, __u64 sched_soft_deadline, __u64 sched_dea
 
 RT_task::~RT_task()
 {
-	// TODO Auto-generated destructor stubfd
+	// TODO Auto-generated destructor stubfd.
 }
 
 void RT_task::set_cpu_affinity()
