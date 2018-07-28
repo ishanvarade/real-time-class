@@ -43,9 +43,11 @@ private:
 	const int core_id;
 	timespec phase;
 	void set_cpu_affinity();
+	void (*task_function) (void);
 public:
 	RT_task();
-	//RT_task(const sched_attr & _attr, const int _core_id, const timespec & phase);
+	RT_task(__u64 sched_runtime, __u64 sched_soft_deadline, __u64 sched_deadline,
+			const int _core_id, const timespec &phase, void (*_task_function) (void));
 	void start_execution();
 	virtual ~RT_task();
 };
