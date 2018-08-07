@@ -16,8 +16,18 @@
 
 #define TwentyMS 698597200
 #define TenMS 349298600
-#define TwentyMS_loops 32000000
-#define TenMS_loops 15700000
+#define ThirtyMS_loops 54750000
+#define TwentyMS_loops 36500000
+#define TenMS_loops 17500000
+
+/*
+ * MSR_PLATFORM_INFO[15:8] of MSR OxCE = 0x23
+ * 0x23 = 35
+ * 35 * 100MHz = 3.5GHz is the frequency of TSC
+ * Processor’s support for invariant TSC is indicated by CPUID.80000007H:EDX[8].
+ * This shows that the TSC frequency is constant
+ */
+#define TSC_Frequency 3500000000   //
 
 using namespace std;
 
@@ -47,14 +57,13 @@ static __inline__ ticks getticks(void)
 
 void task_fun(void)
 {
-	for (int i = 0; i < TenMS_loops; i++)
+	for (int i = 0; i < ThirtyMS_loops; i++)
 	{
 		asm volatile ( "movl $10, %eax;"
 				"movl $20, %ebx;"
 				"addl %ebx, %eax;"
 		);
 	}
-	cout<<"Printf Ishan :"<<TenMS<<endl;
 }
 
 int main_1(int argc, char *argv[])
@@ -99,7 +108,8 @@ int main(int argc, char *argv[])
 	cycle1 = cycles_low1 | ((unsigned long long)cycles_high1) <<32;
 	executionTime = cycle1 - cycle;
 
-	printf ("executionTime: %llu\n", executionTime);
+//	printf ("executionTime: %llu\n", executionTime);
+	cout<<"executionTSC: "<<executionTime<<endl<<"executionTime: "<<((double)executionTime / TSC_Frequency)<<endl;
 	return 0;
 }
 
@@ -121,12 +131,21 @@ int main_3(int argc, char *argv[])
 	//ticks tick,tick1,tickh;
 
 	//tick = getticks();
-	time = 200000;
+	time = 2000000;
 	unsigned long long executionTime;
 	unsigned long long cumulativeExecutionTime = 0;
 	unsigned long long averageExecutionTime;
 	unsigned long long minExecutionTime = ULLONG_MAX;
-	for (int i = 0; i < 10000; i++)
+
+	//Warm-up
+	rdtsc_start(cycles_high, cycles_low);
+	rdtsc_end(cycles_high1, cycles_low1);
+	rdtsc_start(cycles_high, cycles_low);
+	rdtsc_end(cycles_high1, cycles_low1);
+	rdtsc_start(cycles_high, cycles_low);
+	rdtsc_end(cycles_high1, cycles_low1);
+
+	for (int i = 0; i < 20; i++)
 	{
 
 		rdtsc_start(cycles_high, cycles_low);
@@ -152,8 +171,9 @@ int main_3(int argc, char *argv[])
 			minExecutionTime = executionTime;
 		cumulativeExecutionTime += executionTime;
 		averageExecutionTime = cumulativeExecutionTime / (i + 1);
-		printf ("%llu   %llu	%llu	%llu %llu\n", time, executionTime,
-				cumulativeExecutionTime, averageExecutionTime, minExecutionTime);
+		printf ("%llu   %llu	%llu	%llu %llu, %lf %lf \n", time, executionTime,
+				cumulativeExecutionTime, averageExecutionTime, minExecutionTime,
+				((double)executionTime) / 3501000000, ((double)executionTime) / 3500000000);
 	}
 }
 

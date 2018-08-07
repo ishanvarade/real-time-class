@@ -89,18 +89,28 @@ void RT_task::start_execution()
 	CPU_SET(core_id, &cpuset);
 	sts = syscall(333, PID, &phase, sizeof (cpu_set_t), &cpuset);
 	CHECK(sts, "sched_do_job_release()");
-
 	rdtsc_start(cycles_high, cycles_low);
-	task_function();
+	rdtsc_end(cycles_high1, cycles_low1);
+	rdtsc_start(cycles_high, cycles_low);
+	rdtsc_end(cycles_high1, cycles_low1);
+	rdtsc_start(cycles_high, cycles_low);
 	rdtsc_end(cycles_high1, cycles_low1);
 
-	cycle = cycles_low | ((unsigned long long)cycles_high) <<32;
-	cycle1 = cycles_low1 | ((unsigned long long)cycles_high1) <<32;
+	for (int k = 0; k < 3; k++)
+	{
+		rdtsc_start(cycles_high, cycles_low);
+		task_function();
+		rdtsc_end(cycles_high1, cycles_low1);
 
-	unsigned long long executionTime = cycle1 - cycle;
-	printf ("Execution Time: %llu\n", executionTime);
-	sts = syscall(334);
-	CHECK(sts, "sched_do_job_complete()");
+
+		cycle = cycles_low | ((unsigned long long)cycles_high) <<32;
+		cycle1 = cycles_low1 | ((unsigned long long)cycles_high1) <<32;
+
+		unsigned long long executionTime = cycle1 - cycle;
+		printf ("Execution Time: %llu\n", executionTime);
+		sts = syscall(334);
+		CHECK(sts, "sched_do_job_complete()");
+	}
 	sts = syscall(335);
 	CHECK(sts, "sched_task_complete()");
 }
