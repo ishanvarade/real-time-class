@@ -48,7 +48,7 @@ public:
 	RT_task();
 	RT_task(__u64 sched_runtime, __u64 sched_soft_deadline, __u64 sched_deadline,
 			const int _core_id, const timespec &phase, void (*_task_function) (void));
-	void start_execution();
+	void start_execution(int number_of_loops = 1);
 	virtual ~RT_task();
 };
 

@@ -11,8 +11,20 @@
 #include <stdlib.h>
 #include "RTtask.h"
 
+#include <iostream>
+using namespace std;
+
+/*
+ * MSR_PLATFORM_INFO[15:8] of MSR OxCE = 0x23
+ * 0x23 = 35
+ * 35 * 100MHz = 3.5GHz is the frequency of TSC
+ * Processor’s support for invariant TSC is indicated by CPUID.80000007H:EDX[8].
+ * This shows that the TSC frequency is constant
+ */
+#define TSC_Frequency 3500000000   //
+
 #define CHECK(sts, msg) \
-		if (-1 == sts)          \
+		if (sts == -1)          \
 		{                                       \
 			perror(msg);    \
 			exit(-1);               \
@@ -68,7 +80,7 @@ void RT_task::set_cpu_affinity()
 	CHECK(set_result, "sched_setaffinity");
 }
 
-void RT_task::start_execution()
+void RT_task::start_execution(int number_of_loops)
 {
 	int sts;
 	unsigned int cycles_high = 0, cycles_low = 0;
@@ -96,7 +108,7 @@ void RT_task::start_execution()
 	rdtsc_start(cycles_high, cycles_low);
 	rdtsc_end(cycles_high1, cycles_low1);
 
-	for (int k = 0; k < 3; k++)
+	for (int k = 0; k < number_of_loops; k++)
 	{
 		rdtsc_start(cycles_high, cycles_low);
 		task_function();
@@ -107,7 +119,7 @@ void RT_task::start_execution()
 		cycle1 = cycles_low1 | ((unsigned long long)cycles_high1) <<32;
 
 		unsigned long long executionTime = cycle1 - cycle;
-		printf ("Execution Time: %llu\n", executionTime);
+		cout<<"executionTime: "<<((double)executionTime / TSC_Frequency)<<endl;
 		sts = syscall(334);
 		CHECK(sts, "sched_do_job_complete()");
 	}

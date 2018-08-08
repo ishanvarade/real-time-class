@@ -9,16 +9,26 @@
 
 #include "RTtask.h"
 #include <iostream>
+#include <string>
+#include <cstdlib>
 #include <climits>
 #include <unistd.h>
 
 #include <stdio.h>
 
-#define TwentyMS 698597200
-#define TenMS 349298600
-#define ThirtyMS_loops 54750000
-#define TwentyMS_loops 36500000
-#define TenMS_loops 17500000
+#define T300MS_loops 54750000
+#define T200MS_loops 36500000
+#define T100MS_loops 17500000
+
+#define NintyMS_loops 16110000
+#define EightyMS_loops 14300000
+#define SeventyMS_loops 12520000
+#define SistyMS_loops 10740000
+#define FiftyMS_loops 8970000
+#define FourtyMS_loops 7220000
+#define ThirtyMS_loops 5475000
+#define TwentyMS_loops 3630000
+#define TenMS_loops 1750000
 
 /*
  * MSR_PLATFORM_INFO[15:8] of MSR OxCE = 0x23
@@ -57,13 +67,31 @@ static __inline__ ticks getticks(void)
 
 void task_fun(void)
 {
-	for (int i = 0; i < ThirtyMS_loops; i++)
+	for (int i = 0; i < NintyMS_loops; i++)
 	{
 		asm volatile ( "movl $10, %eax;"
 				"movl $20, %ebx;"
 				"addl %ebx, %eax;"
 		);
 	}
+}
+
+int main_0(int argc, char *argv[])
+{
+	cout<<"ARGC: "<<argc<<endl;
+	__u64 wcet = strtoull( argv[1], NULL, 0);
+	__u64 soft_deadline = strtoull( argv[2], NULL, 0);
+	__u64 deadline = strtoull( argv[3], NULL, 0);
+	int core_id = atoi(argv[4]);
+	struct timespec phase;
+	phase.tv_sec = strtoull( argv[5], NULL, 0);
+	phase.tv_nsec = 0;
+	int number_of_repeatation = atoi(argv[6]);
+	cout<<endl<<wcet<<", "<<soft_deadline<<", "<<deadline<<", "<<core_id<<", "
+			<<phase.tv_sec<<", "<<number_of_repeatation<<endl;
+	RT_task task = RT_task(wcet, soft_deadline, deadline, core_id, phase, &task_fun);
+	task.start_execution(number_of_repeatation);
+	return 0;
 }
 
 int main_1(int argc, char *argv[])
@@ -87,11 +115,8 @@ int main(int argc, char *argv[])
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(core_id_5, &cpuset);
-
 	sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset);
 
-
-	unsigned int time;
 	unsigned int cycles_high = 0, cycles_low = 0;
 	unsigned int cycles_high1 = 0, cycles_low1 = 0;
 	unsigned long long cycle = 0, cycle1 = 0;
@@ -171,9 +196,9 @@ int main_3(int argc, char *argv[])
 			minExecutionTime = executionTime;
 		cumulativeExecutionTime += executionTime;
 		averageExecutionTime = cumulativeExecutionTime / (i + 1);
-		printf ("%llu   %llu	%llu	%llu %llu, %lf %lf \n", time, executionTime,
-				cumulativeExecutionTime, averageExecutionTime, minExecutionTime,
-				((double)executionTime) / 3501000000, ((double)executionTime) / 3500000000);
+		cout<<time<<" "<<executionTime<<" "<<cumulativeExecutionTime<<" "
+				<<averageExecutionTime<<" "<<minExecutionTime<<((double)executionTime / TSC_Frequency)<<endl;
 	}
-}
 
+	return 0;
+}
