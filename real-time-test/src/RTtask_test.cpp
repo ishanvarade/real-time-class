@@ -28,7 +28,7 @@
 #define FourtyMS_loops 7220000
 #define ThirtyMS_loops 5475000
 #define TwentyMS_loops 3630000
-#define TenMS_loops 1750000
+#define TenMS_loops 1830000
 
 /*
  * MSR_PLATFORM_INFO[15:8] of MSR OxCE = 0x23
@@ -56,6 +56,8 @@ using namespace std;
 				"%rax", "%rbx", "%rcx", "%rdx")
 
 typedef unsigned long long ticks;
+
+static __u64 wcet_loops;
 static __inline__ ticks getticks(void)
 {
 	unsigned a, d;
@@ -67,7 +69,7 @@ static __inline__ ticks getticks(void)
 
 void task_fun(void)
 {
-	for (int i = 0; i < NintyMS_loops; i++)
+	for (__u64 i = 0; i < wcet_loops; i++)
 	{
 		asm volatile ( "movl $10, %eax;"
 				"movl $20, %ebx;"
@@ -76,10 +78,40 @@ void task_fun(void)
 	}
 }
 
-int main_0(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	cout<<"ARGC: "<<argc<<endl;
+	cout<<"PID: "<<getpid()<<endl;
 	__u64 wcet = strtoull( argv[1], NULL, 0);
+	switch(wcet)
+	{
+	case 10000: wcet_loops = TenMS_loops;
+	break;
+	case 20000: wcet_loops = TwentyMS_loops;
+	break;
+	case 30000: wcet_loops = ThirtyMS_loops;
+	break;
+
+	case 40000: wcet_loops = FourtyMS_loops;
+	break;
+
+	case 50000: wcet_loops = FiftyMS_loops;
+	break;
+
+	case 60000: wcet_loops = SistyMS_loops;
+	break;
+
+	case 70000: wcet_loops = SeventyMS_loops;
+	break;
+
+	case 80000: wcet_loops = EightyMS_loops;
+	break;
+
+	case 90000: wcet_loops = NintyMS_loops;
+	break;
+
+	case 100000: wcet_loops = T100MS_loops;
+	break;
+	}
 	__u64 soft_deadline = strtoull( argv[2], NULL, 0);
 	__u64 deadline = strtoull( argv[3], NULL, 0);
 	int core_id = atoi(argv[4]);
@@ -109,7 +141,7 @@ int main_1(int argc, char *argv[])
 	return 0;
 }
 
-int main(int argc, char *argv[])
+int main_2(int argc, char *argv[])
 {
 	const int core_id_5 = 5;
 	cpu_set_t cpuset;
@@ -124,6 +156,7 @@ int main(int argc, char *argv[])
 
 	unsigned long long executionTime;
 	//tick = getticks();
+	wcet_loops = TenMS_loops;
 	rdtsc_start(cycles_high, cycles_low);
 
 	task_fun();
@@ -133,7 +166,7 @@ int main(int argc, char *argv[])
 	cycle1 = cycles_low1 | ((unsigned long long)cycles_high1) <<32;
 	executionTime = cycle1 - cycle;
 
-//	printf ("executionTime: %llu\n", executionTime);
+	//	printf ("executionTime: %llu\n", executionTime);
 	cout<<"executionTSC: "<<executionTime<<endl<<"executionTime: "<<((double)executionTime / TSC_Frequency)<<endl;
 	return 0;
 }
